@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Habito</title>
-    <!-- Keeping Tailwind CDN for styling preservation -->
+    <!-- Keeping Tailwind CDN for styling preservation if postcss isn't set up, though Vite usually bundles CSS. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -15,9 +15,10 @@
               background: '#09090b', // Zinc 950
               surface: '#18181b', // Zinc 900
               surfaceHighlight: '#27272a', // Zinc 800
-              primary: '#8b5cf6', // Violet 500
-              primaryDark: '#7c3aed', // Violet 600
-              accent: '#d946ef', // Fuchsia 500
+              // Dynamic colors using CSS variables
+              primary: 'rgb(var(--color-primary) / <alpha-value>)',
+              primaryDark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
+              accent: 'rgb(var(--color-accent) / <alpha-value>)',
               success: '#10b981', // Emerald 500
             },
             fontFamily: {
@@ -33,6 +34,10 @@
         font-family: 'Inter', sans-serif;
         background-color: #09090b;
         color: #e4e4e7;
+        /* Default Theme (Violet) */
+        --color-primary: 139 92 246;      /* #8b5cf6 */
+        --color-primary-dark: 124 58 237; /* #7c3aed */
+        --color-accent: 217 70 239;       /* #d946ef */
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {

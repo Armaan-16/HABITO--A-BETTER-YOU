@@ -1,5 +1,5 @@
 
-import { Habit, ScheduleData, LifeEvent, VisionItem } from '../types';
+import { Habit, ScheduleData, LifeEvent, VisionItem, Note } from '../types';
 import { getCurrentUser } from '../services/authService';
 
 // Base keys
@@ -8,6 +8,7 @@ const BASE_KEYS = {
   SCHEDULE: 'habito_schedule',
   EVENTS: 'habito_events',
   VISIONS: 'habito_visions',
+  NOTES: 'habito_notes',
 };
 
 // Helper to get user-specific key
@@ -51,6 +52,15 @@ export const loadVisions = (): VisionItem[] => {
 
 export const saveVisions = (visions: VisionItem[]) => {
   localStorage.setItem(getUserKey(BASE_KEYS.VISIONS), JSON.stringify(visions));
+};
+
+export const loadNotes = (): Note[] => {
+  const data = localStorage.getItem(getUserKey(BASE_KEYS.NOTES));
+  return data ? JSON.parse(data) : [];
+};
+
+export const saveNotes = (notes: Note[]) => {
+  localStorage.setItem(getUserKey(BASE_KEYS.NOTES), JSON.stringify(notes));
 };
 
 // Helper to get consistent 'YYYY-MM-DD' key in Local Time

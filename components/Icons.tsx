@@ -33,7 +33,12 @@ import {
   LogOut,
   User,
   Phone,
-  Lock
+  Lock,
+  List,
+  StickyNote,
+  AlertCircle,
+  Palette,
+  RotateCcw
 } from 'lucide-react';
 
 export { 
@@ -70,5 +75,10 @@ export {
   LogOut,
   User,
   Phone,
-  Lock
+  Lock,
+  List,
+  StickyNote,
+  AlertCircle,
+  Palette,
+  RotateCcw
 };

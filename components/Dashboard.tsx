@@ -1,16 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
 import HabitMatrix from './HabitMatrix';
 import DailySchedule from './DailySchedule';
 import YearlyConsistency from './YearlyConsistency';
 import ImportantEvents from './ImportantEvents';
 import VisionBoard from './VisionBoard';
-import { Habit, ScheduleData, LifeEvent, VisionItem, User } from '../types';
+import QuickNotes from './QuickNotes';
+import { Habit, ScheduleData, LifeEvent, VisionItem, Note, User } from '../types';
 import { 
     loadHabits, saveHabits, 
     loadSchedule, saveSchedule, 
     loadEvents, saveEvents,
-    loadVisions, saveVisions
+    loadVisions, saveVisions,
+    loadNotes, saveNotes
 } from '../utils/storage';
 
 const QUOTES = [
@@ -32,6 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [scheduleData, setScheduleData] = useState<ScheduleData>({});
   const [events, setEvents] = useState<LifeEvent[]>([]);
   const [visions, setVisions] = useState<VisionItem[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [quote, setQuote] = useState("");
 
   // Load Initial Data (Runs whenever User ID changes)
@@ -40,6 +42,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     setScheduleData(loadSchedule());
     setEvents(loadEvents());
     setVisions(loadVisions());
+    setNotes(loadNotes());
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
   }, [user.id]);
 
@@ -48,6 +51,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   useEffect(() => { saveSchedule(scheduleData); }, [scheduleData]);
   useEffect(() => { saveEvents(events); }, [events]);
   useEffect(() => { saveVisions(visions); }, [visions]);
+  useEffect(() => { saveNotes(notes); }, [notes]);
 
   return (
     <div className="p-4 md:p-8 max-w-[1800px] mx-auto space-y-6">
@@ -62,17 +66,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
         {/* Left Column (Main Content) */}
         <div className="xl:col-span-2 flex flex-col gap-6">
+            {/* 1. Yearly Consistency (Based on Daily Schedule) */}
+            <YearlyConsistency scheduleData={scheduleData} />
+
+            {/* 3. Habit Matrix */}
+            <HabitMatrix habits={habits} setHabits={setHabits} />
+
             {/* 0. Vision Board */}
             <VisionBoard visions={visions} setVisions={setVisions} />
-
-            {/* 1. Yearly Consistency */}
-            <YearlyConsistency habits={habits} />
             
             {/* 2. Important Events */}
             <ImportantEvents events={events} setEvents={setEvents} />
 
-            {/* 3. Habit Matrix (Now includes Growth Trends) */}
-            <HabitMatrix habits={habits} setHabits={setHabits} />
+            {/* 5. Quick Notes - Urgent Information */}
+            <QuickNotes notes={notes} setNotes={setNotes} />
         </div>
 
         {/* Right Column (Side Panel) */}

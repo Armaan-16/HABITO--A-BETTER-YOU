@@ -28,6 +28,13 @@ export interface LifeEvent {
   color: string;
 }
 
+export interface Note {
+  id: string;
+  content: string;
+  isUrgent: boolean;
+  createdAt: string;
+}
+
 export interface Quote {
   text: string;
   author: string;
@@ -38,12 +45,13 @@ export interface ChartData {
   value: number;
 }
 
-export type VisionCategory = 'WEEKLY' | 'MONTHLY' | 'YEARLY' | '5_YEARS';
+export type VisionCategory = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | '5_YEARS';
 
 export interface VisionItem {
   id: string;
   text: string;
   category: VisionCategory;
+  day?: string; // Optional: For Weekly breakdown (e.g., 'Mon', 'Tue')
 }
 
 export interface User {

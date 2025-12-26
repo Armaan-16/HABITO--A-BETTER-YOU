@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from './Icons';
-import { Habit } from '../types';
+import { ScheduleData } from '../types';
 import { getLocalDateKey } from '../utils/storage';
 
 interface YearlyConsistencyProps {
-  habits: Habit[];
+  scheduleData: ScheduleData;
 }
 
-const YearlyConsistency: React.FC<YearlyConsistencyProps> = ({ habits }) => {
+const YearlyConsistency: React.FC<YearlyConsistencyProps> = ({ scheduleData }) => {
   const [year, setYear] = useState(new Date().getFullYear());
 
   // Helper to get all days in the year
@@ -23,39 +23,24 @@ const YearlyConsistency: React.FC<YearlyConsistencyProps> = ({ habits }) => {
 
   const days = getDaysInYear(year);
   
-  // Calculate completion rate for each day
+  // Calculate completion rate based on Daily Schedule
   const getIntensity = (dateStr: string) => {
-    let completed = 0;
-    let total = 0;
+    const dayItems = scheduleData[dateStr] || [];
     
-    // Find habits scheduled for this day of week
-    // Note: getLocalDateKey returns 'YYYY-MM-DD'. We need to parse it back for getDay()
-    // Using simple Date(dateStr) works usually, but let's be safe since we just constructed the string
-    // Actually dayOfWeek is constant for a specific dateStr
+    // Filter only items that have an actual activity defined
+    const activeItems = dayItems.filter(i => i.activity && i.activity.trim() !== '');
     
-    // Parse dateStr parts to avoid UTC shift
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dayObj = new Date(y, m - 1, d);
-    const dayOfWeek = dayObj.getDay();
+    if (activeItems.length === 0) return 0;
 
-    habits.forEach(h => {
-        if (h.frequency.includes(dayOfWeek)) {
-            total++;
-            if (h.history[dateStr]) {
-                completed++;
-            }
-        }
-    });
-
-    if (total === 0) return 0;
-    return completed / total;
+    const completed = activeItems.filter(i => i.completed).length;
+    return completed / activeItems.length;
   };
 
   return (
     <div className="bg-surface rounded-3xl p-6 border border-surfaceHighlight shadow-xl">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          Yearly Consistency: {year}
+          Daily Execution: {year}
         </h2>
         <div className="flex gap-2">
           <button onClick={() => setYear(y => y - 1)} className="p-1 hover:bg-surfaceHighlight rounded-lg text-gray-400 hover:text-white transition-colors">
@@ -82,7 +67,7 @@ const YearlyConsistency: React.FC<YearlyConsistencyProps> = ({ habits }) => {
                 if (intensity > 0) bgClass = 'bg-primary/30';
                 if (intensity > 0.3) bgClass = 'bg-primary/50';
                 if (intensity > 0.6) bgClass = 'bg-primary/80';
-                if (intensity === 1) bgClass = 'bg-primary';
+                if (intensity === 1) bgClass = 'bg-success'; // Use success color for 100%
 
                 return (
                     <div 
@@ -96,13 +81,13 @@ const YearlyConsistency: React.FC<YearlyConsistencyProps> = ({ habits }) => {
       </div>
       
       <div className="flex items-center gap-2 mt-4 text-xs text-gray-500 justify-end">
-        <span>Less</span>
+        <span>Planned & Done</span>
         <div className="w-3 h-3 bg-surfaceHighlight/50 rounded-sm" />
         <div className="w-3 h-3 bg-primary/30 rounded-sm" />
         <div className="w-3 h-3 bg-primary/50 rounded-sm" />
         <div className="w-3 h-3 bg-primary/80 rounded-sm" />
-        <div className="w-3 h-3 bg-primary rounded-sm" />
-        <span>More</span>
+        <div className="w-3 h-3 bg-success rounded-sm" />
+        <span>100%</span>
       </div>
     </div>
   );

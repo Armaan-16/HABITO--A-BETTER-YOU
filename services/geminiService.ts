@@ -1,12 +1,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScheduleItem } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-
 const modelName = "gemini-2.5-flash";
 
 export const generateAiSchedule = async (userFocus: string, date: string): Promise<ScheduleItem[]> => {
   try {
+    // Initialize inside the function to avoid top-level failures if env var is missing at load time
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+
+    if (!process.env.API_KEY) {
+        console.warn("Gemini API Key is missing. Check your environment variables.");
+        return [];
+    }
+
     const response = await ai.models.generateContent({
       model: modelName,
       contents: `Create a productive daily schedule for someone focusing on: "${userFocus}". 
@@ -52,6 +58,12 @@ export const generateAiSchedule = async (userFocus: string, date: string): Promi
 
 export const getAiInsight = async (completedCount: number, totalCount: number): Promise<string> => {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    
+    if (!process.env.API_KEY) {
+        return "Consistency is key. (API Key missing)";
+    }
+
     const response = await ai.models.generateContent({
       model: modelName,
       contents: `User completed ${completedCount} out of ${totalCount} habits today. 
@@ -59,6 +71,7 @@ export const getAiInsight = async (completedCount: number, totalCount: number): 
     });
     return response.text || "Keep pushing forward.";
   } catch (error) {
+    console.error("Gemini Insight Error:", error);
     return "Consistency is the key to mastery.";
   }
 };

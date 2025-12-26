@@ -38,7 +38,9 @@ import {
   StickyNote,
   AlertCircle,
   Palette,
-  RotateCcw
+  RotateCcw,
+  ListTodo,
+  Trophy
 } from 'lucide-react';
 
 export { 
@@ -80,5 +82,7 @@ export {
   StickyNote,
   AlertCircle,
   Palette,
-  RotateCcw
+  RotateCcw,
+  ListTodo,
+  Trophy
 };

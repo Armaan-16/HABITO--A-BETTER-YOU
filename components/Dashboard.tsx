@@ -5,6 +5,7 @@ import YearlyConsistency from './YearlyConsistency';
 import ImportantEvents from './ImportantEvents';
 import VisionBoard from './VisionBoard';
 import QuickNotes from './QuickNotes';
+import DailySummary from './DailySummary';
 import { Habit, ScheduleData, LifeEvent, VisionItem, Note, User } from '../types';
 import { 
     loadHabits, saveHabits, 
@@ -66,25 +67,28 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
         {/* Left Column (Main Content) */}
         <div className="xl:col-span-2 flex flex-col gap-6">
-            {/* 1. Yearly Consistency (Based on Daily Schedule) */}
+            {/* 1. Daily Summary (New) */}
+            <DailySummary scheduleData={scheduleData} habits={habits} />
+
+            {/* 2. Yearly Consistency (Based on Daily Schedule) */}
             <YearlyConsistency scheduleData={scheduleData} />
 
             {/* 3. Habit Matrix */}
             <HabitMatrix habits={habits} setHabits={setHabits} />
 
-            {/* 0. Vision Board */}
+            {/* 4. Vision Board */}
             <VisionBoard visions={visions} setVisions={setVisions} />
             
-            {/* 2. Important Events */}
+            {/* 5. Important Events */}
             <ImportantEvents events={events} setEvents={setEvents} />
 
-            {/* 5. Quick Notes - Urgent Information */}
+            {/* 6. Quick Notes - Urgent Information */}
             <QuickNotes notes={notes} setNotes={setNotes} />
         </div>
 
         {/* Right Column (Side Panel) */}
         <div className="xl:col-span-1 flex flex-col gap-6 h-full">
-            {/* 4. Daily Schedule - Now takes full height of the column */}
+            {/* 7. Daily Schedule - Now takes full height of the column */}
             <div className="flex-grow sticky top-8" style={{ height: 'calc(100vh - 100px)' }}>
                 <DailySchedule scheduleData={scheduleData} setScheduleData={setScheduleData} />
             </div>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Zap, LogOut, Settings } from './Icons';
 import { logoutUser } from '../services/authService';
@@ -6,9 +5,10 @@ import { logoutUser } from '../services/authService';
 interface SidebarProps {
   onLogout: () => void;
   onOpenSettings: () => void;
+  onOpenStory: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onLogout, onOpenSettings }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onLogout, onOpenSettings, onOpenStory }) => {
   const handleLogout = () => {
     logoutUser();
     onLogout();
@@ -16,16 +16,19 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, onOpenSettings }) => {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-20 md:w-24 bg-surface border-r border-surfaceHighlight flex flex-col items-center py-8 z-50">
-      <div className="mb-12 flex flex-col items-center gap-2">
-        <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-          <Zap className="text-white w-7 h-7" fill="currentColor" />
-        </div>
+      {/* Main Logo - Hidden on mobile to prevent congestion, shown on MD+ */}
+      <div className="mb-12 flex-col items-center gap-2 hidden md:flex">
+        <button 
+          onClick={onOpenStory}
+          className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 hover:shadow-primary/40 transition-all cursor-pointer group"
+          title="Read our Story"
+        >
+          <Zap className="text-white w-7 h-7 group-hover:animate-pulse" fill="currentColor" />
+        </button>
       </div>
 
       <div className="flex-1 w-full flex flex-col items-center gap-8">
-         <div className="w-10 h-10 rounded-lg bg-surfaceHighlight/50 flex items-center justify-center text-primary border border-primary/20 cursor-default">
-            <span className="font-bold text-lg">H</span>
-         </div>
+         {/* Spacer */}
       </div>
 
       <div className="mb-4 flex flex-col gap-4">

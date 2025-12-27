@@ -1,7 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { Habit } from '../types';
-import { Plus, Trash2, TrendingUp, CheckCircle2, ChevronDown, ChevronUp, Flame } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, CheckCircle2, ChevronDown, ChevronUp, Flame, Edit2 } from './Icons';
+import * as AllIcons from './Icons';
 import { BarChart, Bar, AreaChart, Area, XAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getLocalDateKey } from '../utils/storage';
 
@@ -10,9 +11,17 @@ interface HabitMatrixProps {
   setHabits: React.Dispatch<React.SetStateAction<Habit[]>>;
 }
 
+const AVAILABLE_ICONS = [
+  'Circle', 'Activity', 'Zap', 'Droplets', 'BookOpen', 
+  'Dumbbell', 'BrainCircuit', 'Sparkles', 'Moon', 'Sun', 
+  'Target', 'Rocket', 'User', 'Phone', 'Trophy', 'Flame',
+  'ListTodo', 'Calendar', 'Clock'
+];
+
 const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
   const [showAdd, setShowAdd] = useState(false);
-  const [newHabit, setNewHabit] = useState<Partial<Habit>>({ name: '', frequency: [0,1,2,3,4,5,6] });
+  const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+  const [newHabit, setNewHabit] = useState<Partial<Habit>>({ name: '', frequency: [0,1,2,3,4,5,6], icon: 'Circle' });
   const [view, setView] = useState<'matrix' | 'analytics'>('matrix');
   const [expandedHabitId, setExpandedHabitId] = useState<string | null>(null);
 
@@ -36,26 +45,50 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
     }));
   };
 
-  const handleAddHabit = () => {
+  const handleSaveHabit = () => {
     if (!newHabit.name) return;
-    const habit: Habit = {
-        id: Date.now().toString(),
-        name: newHabit.name || 'New Habit',
-        icon: 'Circle',
-        color: 'primary',
-        category: 'productivity',
-        frequency: newHabit.frequency || [],
-        history: {},
-        streak: 0
-    };
-    setHabits([...habits, habit]);
+    
+    if (editingHabitId) {
+        setHabits(habits.map(h => h.id === editingHabitId ? { ...h, ...newHabit } as Habit : h));
+        setEditingHabitId(null);
+    } else {
+        const habit: Habit = {
+            id: Date.now().toString(),
+            name: newHabit.name || 'New Habit',
+            icon: newHabit.icon || 'Circle',
+            color: 'primary',
+            category: 'productivity',
+            frequency: newHabit.frequency || [],
+            history: {},
+            streak: 0
+        };
+        setHabits([...habits, habit]);
+    }
+    
     setShowAdd(false);
-    setNewHabit({ name: '', frequency: [0,1,2,3,4,5,6] });
+    setEditingHabitId(null);
+    setNewHabit({ name: '', frequency: [0,1,2,3,4,5,6], icon: 'Circle' });
+  };
+
+  const startEditing = (e: React.MouseEvent, habit: Habit) => {
+      e.stopPropagation();
+      setNewHabit(habit);
+      setEditingHabitId(habit.id);
+      setShowAdd(true);
+      setExpandedHabitId(null);
+  };
+
+  const cancelForm = () => {
+    setShowAdd(false);
+    setEditingHabitId(null);
+    setNewHabit({ name: '', frequency: [0,1,2,3,4,5,6], icon: 'Circle' });
   };
 
   const deleteHabit = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setHabits(habits.filter(h => h.id !== id));
+    if (confirm('Are you sure you want to delete this habit?')) {
+        setHabits(habits.filter(h => h.id !== id));
+    }
   };
 
   const toggleFrequencyDay = (dayIndex: number) => {
@@ -76,15 +109,11 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
         d.setDate(d.getDate() - i);
         const dateKey = getLocalDateKey(d);
         const dayOfWeek = d.getDay();
-
-        // If today is NOT in frequency, it doesn't break streak, but also doesn't add to it?
-        // Actually typically streak is consecutive *scheduled* completions.
         
         if (habit.frequency.includes(dayOfWeek)) {
             if (habit.history[dateKey]) {
                 streak++;
             } else {
-                // If it's today and not done yet, we don't break streak from yesterday
                 if (i === 0) continue; 
                 break;
             }
@@ -96,7 +125,7 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
   const getHeatmapData = (habit: Habit) => {
       const days = [];
       const today = new Date();
-      // Generate last ~140 days (20 weeks) for a compact view
+      // Generate last ~140 days (20 weeks)
       for (let i = 139; i >= 0; i--) {
           const d = new Date(today);
           d.setDate(d.getDate() - i);
@@ -181,6 +210,9 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
                     const isExpanded = expandedHabitId === habit.id;
                     const streak = calculateStreak(habit);
                     const heatmapDays = getHeatmapData(habit);
+                    
+                    // Dynamic Icon
+                    const IconComp = (AllIcons as any)[habit.icon] || AllIcons.Circle;
 
                     return (
                         <div 
@@ -190,17 +222,23 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
                         >
                             <div className="flex items-center justify-between p-3">
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${isCompleted ? 'bg-primary/20 text-primary' : 'bg-surfaceHighlight text-gray-500'}`}>
+                                    <div className={`p-2 rounded-lg transition-colors ${isExpanded ? 'bg-surfaceHighlight text-gray-300' : 'bg-transparent text-gray-500'}`}>
                                         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                     </div>
-                                    <div>
-                                        <h4 className="font-medium text-white text-sm">{habit.name}</h4>
-                                        <div className="flex gap-1 mt-1">
-                                            {DAYS.map((d, i) => (
-                                                <span key={i} className={`text-[9px] w-3 h-3 flex items-center justify-center rounded ${habit.frequency.includes(i) ? 'bg-primary/20 text-primary' : 'bg-black/20 text-gray-600'}`}>
-                                                    {d}
-                                                </span>
-                                            ))}
+                                    
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-surfaceHighlight/50 rounded-lg text-primary shadow-sm">
+                                            <IconComp size={18} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-medium text-white text-sm">{habit.name}</h4>
+                                            <div className="flex gap-1 mt-1">
+                                                {DAYS.map((d, i) => (
+                                                    <span key={i} className={`text-[9px] w-3 h-3 flex items-center justify-center rounded ${habit.frequency.includes(i) ? 'bg-primary/20 text-primary' : 'bg-black/20 text-gray-600'}`}>
+                                                        {d}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -229,12 +267,20 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
                                 <div className="px-3 pb-4 pt-1 border-t border-white/5 bg-black/20 cursor-default" onClick={e => e.stopPropagation()}>
                                     <div className="flex justify-between items-center mb-3">
                                         <span className="text-xs font-semibold text-gray-400">Consistency Heatmap</span>
-                                        <button 
-                                            onClick={(e) => deleteHabit(e, habit.id)} 
-                                            className="text-xs flex items-center gap-1 text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-500/10 transition-colors"
-                                        >
-                                            <Trash2 size={12} /> Delete Habit
-                                        </button>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={(e) => startEditing(e, habit)} 
+                                                className="text-xs flex items-center gap-1 text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-white/10 transition-colors"
+                                            >
+                                                <Edit2 size={12} /> Edit
+                                            </button>
+                                            <button 
+                                                onClick={(e) => deleteHabit(e, habit.id)} 
+                                                className="text-xs flex items-center gap-1 text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-500/10 transition-colors"
+                                            >
+                                                <Trash2 size={12} /> Delete
+                                            </button>
+                                        </div>
                                     </div>
                                     
                                     {/* Heatmap Grid */}
@@ -242,7 +288,7 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
                                         {heatmapDays.map((d) => {
                                             const done = habit.history[d.date];
                                             let bg = 'bg-surfaceHighlight/30';
-                                            if (!d.isScheduled) bg = 'opacity-0'; // Invisible if not scheduled
+                                            if (!d.isScheduled) bg = 'opacity-0';
                                             else if (done) bg = 'bg-primary';
                                             
                                             return (
@@ -264,35 +310,70 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
 
             {showAdd ? (
                 <div className="p-4 bg-surfaceHighlight/50 rounded-xl border border-primary/20 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-sm font-bold text-white">{editingHabitId ? 'Edit Habit' : 'New Habit'}</h3>
+                        <button onClick={cancelForm} className="text-gray-500 hover:text-white"><Trash2 size={14} className="opacity-0" /></button> 
+                    </div>
+
                     <input 
-                        className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-3 focus:outline-none focus:border-primary"
+                        className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:outline-none focus:border-primary"
                         placeholder="Habit Name"
                         value={newHabit.name}
                         onChange={e => setNewHabit({...newHabit, name: e.target.value})}
                         autoFocus
                     />
-                    <div className="flex gap-2 justify-center mb-3">
-                        {DAYS.map((d, i) => (
-                            <button 
-                                key={i}
-                                onClick={() => toggleFrequencyDay(i)}
-                                className={`w-6 h-6 text-[10px] rounded flex items-center justify-center transition-colors ${newHabit.frequency?.includes(i) ? 'bg-primary text-white' : 'bg-black/40 text-gray-500 hover:bg-white/10'}`}
-                            >
-                                {d}
-                            </button>
-                        ))}
+
+                    {/* Icon Picker */}
+                    <div className="mb-4">
+                        <label className="text-xs font-semibold text-gray-400 mb-2 block uppercase tracking-wider">Icon</label>
+                        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1 bg-black/20 rounded-lg">
+                            {AVAILABLE_ICONS.map(iconName => {
+                                const IconComp = (AllIcons as any)[iconName] || AllIcons.Circle;
+                                const isSelected = newHabit.icon === iconName || (!newHabit.icon && iconName === 'Circle');
+                                return (
+                                    <button
+                                        key={iconName}
+                                        onClick={() => setNewHabit({...newHabit, icon: iconName})}
+                                        className={`p-2 rounded-lg transition-all ${isSelected ? 'bg-primary text-white ring-2 ring-primary/50 shadow-lg shadow-primary/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
+                                        title={iconName}
+                                    >
+                                        <IconComp size={18} />
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
+
+                    <div className="mb-4">
+                        <label className="text-xs font-semibold text-gray-400 mb-2 block uppercase tracking-wider">Frequency</label>
+                        <div className="flex gap-1.5 justify-between">
+                            {DAYS.map((d, i) => (
+                                <button 
+                                    key={i}
+                                    onClick={() => toggleFrequencyDay(i)}
+                                    className={`flex-1 h-8 text-[10px] font-bold rounded-lg flex items-center justify-center transition-all ${newHabit.frequency?.includes(i) ? 'bg-primary text-white shadow' : 'bg-black/40 text-gray-600 hover:bg-white/5'}`}
+                                >
+                                    {d}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="flex gap-2">
-                        <button onClick={handleAddHabit} className="flex-1 bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primaryDark">Save</button>
-                        <button onClick={() => setShowAdd(false)} className="px-3 bg-white/5 text-gray-400 text-xs font-bold rounded-lg hover:bg-white/10">Cancel</button>
+                        <button onClick={handleSaveHabit} className="flex-1 bg-primary text-white text-xs font-bold py-2.5 rounded-lg hover:bg-primaryDark transition-colors shadow-lg shadow-primary/25">
+                            {editingHabitId ? 'Update Habit' : 'Create Habit'}
+                        </button>
+                        <button onClick={cancelForm} className="px-4 bg-white/5 text-gray-400 text-xs font-bold rounded-lg hover:bg-white/10 hover:text-white transition-colors">
+                            Cancel
+                        </button>
                     </div>
                 </div>
             ) : (
                 <button 
                     onClick={() => setShowAdd(true)}
-                    className="w-full py-2 border border-dashed border-gray-700 rounded-xl text-gray-500 text-sm hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 border border-dashed border-gray-700 rounded-xl text-gray-500 text-sm hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 group"
                 >
-                    <Plus size={16} /> Add Habit
+                    <Plus size={16} className="group-hover:scale-110 transition-transform" /> Add New Habit
                 </button>
             )}
           </div>
@@ -319,7 +400,7 @@ const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {
                             tickLine={false} 
                             tick={{ fill: '#71717a', fontSize: 10 }} 
                             dy={10}
-                            interval={2} // Show fewer labels
+                            interval={2} 
                         />
                         <RechartsTooltip 
                             contentStyle={{ backgroundColor: '#09090b', border: '1px solid #27272a', borderRadius: '8px', fontSize: '12px' }}

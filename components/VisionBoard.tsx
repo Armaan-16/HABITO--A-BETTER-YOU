@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { VisionItem, VisionCategory } from '../types';
 import { Target, Rocket, Crown, Calendar, Plus, Trash2, Edit2, Check, X, ListTodo, Sun } from 'lucide-react';
@@ -90,7 +89,7 @@ const VisionBoard: React.FC<VisionBoardProps> = ({ visions, setVisions }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
            <Sun className="text-primary" />
-           Vision Tracker
+           Commit
         </h2>
         
         <div className="flex bg-surfaceHighlight/50 p-1 rounded-xl overflow-x-auto scrollbar-hide">

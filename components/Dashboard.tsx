@@ -6,6 +6,7 @@ import ImportantEvents from './ImportantEvents';
 import VisionBoard from './VisionBoard';
 import QuickNotes from './QuickNotes';
 import DailySummary from './DailySummary';
+import { Zap, Settings, LogOut, BookOpen } from './Icons'; 
 import { Habit, ScheduleData, LifeEvent, VisionItem, Note, User } from '../types';
 import { 
     loadHabits, saveHabits, 
@@ -27,15 +28,19 @@ const QUOTES = [
 
 interface DashboardProps {
     user: User;
+    onOpenStory: () => void;
+    onOpenSettings: () => void;
+    onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings, onLogout }) => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [scheduleData, setScheduleData] = useState<ScheduleData>({});
   const [events, setEvents] = useState<LifeEvent[]>([]);
   const [visions, setVisions] = useState<VisionItem[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [quote, setQuote] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Load Initial Data (Runs whenever User ID changes)
   useEffect(() => {
@@ -57,20 +62,69 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   return (
     <div className="p-4 md:p-8 max-w-[1800px] mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Welcome Back, {user.name}</h1>
-          <div className="inline-block px-4 py-2 rounded-r-xl border-l-4 border-primary bg-surfaceHighlight/30 backdrop-blur-sm">
-             <p className="text-gray-300 italic font-medium text-sm md:text-base">"{quote}"</p>
+      <div className="mb-8 relative z-50">
+          <div className="flex items-center gap-4">
+              
+              {/* Logo Menu Button */}
+              <div className="relative">
+                  <button 
+                      onClick={() => setIsMenuOpen(!isMenuOpen)}
+                      className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0 animate-in zoom-in-50 hover:scale-105 transition-transform"
+                  >
+                      <Zap className="text-white w-6 h-6" fill="currentColor" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40 cursor-default" onClick={() => setIsMenuOpen(false)} />
+                        <div className="absolute top-14 left-0 w-56 bg-surface border border-surfaceHighlight rounded-xl shadow-2xl p-2 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200 z-50">
+                            <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                Menu
+                            </div>
+                            <button 
+                                onClick={() => { onOpenStory(); setIsMenuOpen(false); }}
+                                className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-surfaceHighlight rounded-lg transition-colors text-left"
+                            >
+                                <BookOpen size={16} className="text-pink-400" />
+                                Our Story
+                            </button>
+                            <button 
+                                onClick={() => { onOpenSettings(); setIsMenuOpen(false); }}
+                                className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-surfaceHighlight rounded-lg transition-colors text-left"
+                            >
+                                <Settings size={16} className="text-blue-400" />
+                                Settings
+                            </button>
+                            <div className="h-px bg-white/5 my-1" />
+                            <button 
+                                onClick={() => { onLogout(); setIsMenuOpen(false); }}
+                                className="flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors text-left"
+                            >
+                                <LogOut size={16} />
+                                Sign Out
+                            </button>
+                        </div>
+                      </>
+                  )}
+              </div>
+
+              <div>
+                  <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight">Welcome Back, {user.name}</h1>
+                  <div className="mt-2 inline-block px-4 py-2 rounded-r-xl border-l-4 border-primary bg-surfaceHighlight/30 backdrop-blur-sm">
+                    <p className="text-gray-300 italic font-medium text-sm md:text-base">"{quote}"</p>
+                  </div>
+              </div>
           </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
         {/* Left Column (Main Content) */}
         <div className="xl:col-span-2 flex flex-col gap-6">
-            {/* 1. Daily Summary (New) */}
+            {/* 1. Daily Summary */}
             <DailySummary scheduleData={scheduleData} habits={habits} />
 
-            {/* 2. Yearly Consistency (Based on Daily Schedule) */}
+            {/* 2. Yearly Consistency (Renamed to Momentum) */}
             <YearlyConsistency scheduleData={scheduleData} />
 
             {/* 3. Habit Matrix */}
@@ -82,13 +136,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             {/* 5. Important Events */}
             <ImportantEvents events={events} setEvents={setEvents} />
 
-            {/* 6. Quick Notes - Urgent Information */}
+            {/* 6. Quick Notes */}
             <QuickNotes notes={notes} setNotes={setNotes} />
         </div>
 
         {/* Right Column (Side Panel) */}
         <div className="xl:col-span-1 flex flex-col gap-6 h-full">
-            {/* 7. Daily Schedule - Now takes full height of the column */}
+            {/* 7. Daily Schedule */}
             <div className="flex-grow sticky top-8" style={{ height: 'calc(100vh - 100px)' }}>
                 <DailySchedule scheduleData={scheduleData} setScheduleData={setScheduleData} />
             </div>

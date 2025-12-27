@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Sparkles, ChevronLeft, ChevronRight, Circle, CheckCircle2, Calendar, Activity, List, TrendingUp } from './Icons';
+import { Sparkles, ChevronLeft, ChevronRight, Circle, CheckCircle2, Calendar, Activity, List, TrendingUp, Plus } from './Icons';
 import { ScheduleData, ScheduleItem } from '../types';
 import { generateAiSchedule } from '../services/geminiService';
 import { getLocalDateKey } from '../utils/storage';
@@ -192,6 +192,13 @@ const DailySchedule: React.FC<DailyScheduleProps> = ({ scheduleData, setSchedule
     });
   };
 
+  const copyToNextHour = (hour: number, activity: string) => {
+      if (!activity) return;
+      const nextHour = (hour + 1) % 24;
+      if (nextHour === 0) return; // Prevent wrapping to next day start
+      updateItem(nextHour, { activity });
+  };
+
   const handleAiGenerate = async () => {
     if (!prompt) return;
     setLoading(true);
@@ -217,7 +224,7 @@ const DailySchedule: React.FC<DailyScheduleProps> = ({ scheduleData, setSchedule
       {/* Header & Nav */}
       <div className="flex items-center justify-between mb-4">
         <div>
-            <h2 className="text-xl font-bold text-white">Daily Schedule</h2>
+            <h2 className="text-xl font-bold text-white">Plan Your Day</h2>
             <div className="flex items-center gap-2 mt-2">
                 <button onClick={() => handleDateChange(-1)} className="hover:text-primary transition-colors p-1"><ChevronLeft size={16}/></button>
                 
@@ -452,46 +459,74 @@ const DailySchedule: React.FC<DailyScheduleProps> = ({ scheduleData, setSchedule
                     </div>
                 )}
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {HOURS.map(hour => {
                         const item = currentItems.find(i => i.hour === hour);
                         
                         // Generate formatted time range (e.g., 9-10 AM)
                         const nextHour = (hour + 1) % 24;
-                        const formatHour = (h: number) => h % 12 || 12;
-                        const period = hour >= 12 ? 'PM' : 'AM';
-                        const timeLabel = `${formatHour(hour)}-${formatHour(nextHour)} ${period}`;
+                        const formatHour = (h: number) => {
+                            if (h === 0 || h === 24) return 12;
+                            if (h > 12) return h - 12;
+                            return h;
+                        };
+                        
+                        const startPeriod = hour < 12 ? 'AM' : 'PM';
+                        const endPeriod = nextHour < 12 ? 'AM' : 'PM';
+                        
+                        let timeLabel;
+                        if (startPeriod === endPeriod) {
+                             timeLabel = `${formatHour(hour)} - ${formatHour(nextHour)} ${startPeriod}`;
+                        } else {
+                             timeLabel = `${formatHour(hour)} ${startPeriod} - ${formatHour(nextHour)} ${endPeriod}`;
+                        }
 
                         const isCompleted = item?.completed;
                         const hasActivity = !!item?.activity;
                         
                         return (
-                            <div key={hour} className={`group flex items-center gap-3 p-3 rounded-xl border transition-all ${isCompleted ? 'bg-surfaceHighlight/30 border-transparent opacity-60' : hasActivity ? 'bg-surfaceHighlight/20 border-white/5' : 'border-dashed border-white/5 hover:border-white/10'}`}>
-                                <span className="text-xs font-mono text-gray-500 w-16 flex-shrink-0 text-right">{timeLabel}</span>
+                            <div key={hour} className={`group flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 rounded-2xl border transition-all ${isCompleted ? 'bg-surfaceHighlight/30 border-transparent opacity-60' : hasActivity ? 'bg-surfaceHighlight/20 border-white/5' : 'border-dashed border-white/5 hover:border-white/10'}`}>
                                 
-                                <div className="flex-1">
+                                {/* Time Label - Increased visibility */}
+                                <div className="min-w-[85px] sm:text-right">
+                                    <span className="text-base font-bold text-gray-300 block leading-tight">{timeLabel}</span>
+                                </div>
+                                
+                                <div className="flex-1 flex items-center gap-2 w-full">
                                     {isPast ? (
-                                        <div className="text-sm text-gray-300 min-h-[20px]">{item?.activity || '-'}</div>
+                                        <div className="text-sm text-gray-300 min-h-[24px] py-1">{item?.activity || '-'}</div>
                                     ) : (
-                                        <input 
-                                            type="text"
-                                            placeholder={isCompleted ? "Completed" : "Plan this hour..."}
-                                            className={`w-full bg-transparent text-sm focus:outline-none placeholder-gray-600 ${isCompleted ? 'line-through text-gray-500' : 'text-white'}`}
-                                            value={item?.activity || ''}
-                                            onChange={(e) => updateItem(hour, { activity: e.target.value })}
-                                        />
+                                        <div className="flex-1 relative group/input">
+                                            <input 
+                                                type="text"
+                                                placeholder={isCompleted ? "Completed" : "Plan this hour..."}
+                                                className={`w-full bg-transparent text-sm md:text-base focus:outline-none placeholder-gray-600 py-1 ${isCompleted ? 'line-through text-gray-500' : 'text-white'}`}
+                                                value={item?.activity || ''}
+                                                onChange={(e) => updateItem(hour, { activity: e.target.value })}
+                                            />
+                                            {/* Plus Icon for repetition - appears when activity exists and not past */}
+                                            {hasActivity && !isPast && (
+                                                <button 
+                                                    onClick={() => copyToNextHour(hour, item!.activity)}
+                                                    className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 p-1 text-gray-500 hover:text-primary transition-all hover:bg-white/5 rounded-md"
+                                                    title="Copy to next hour"
+                                                >
+                                                    <Plus size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
 
                                 <button 
                                     onClick={() => updateItem(hour, { completed: !isCompleted })}
                                     disabled={isPast || !hasActivity}
-                                    className={`transition-colors flex-shrink-0 ${isPast ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                                    className={`self-end sm:self-center transition-all flex-shrink-0 ${isPast ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-110'}`}
                                 >
                                     {isCompleted ? (
-                                        <CheckCircle2 size={20} className="text-success" />
+                                        <CheckCircle2 size={24} className="text-success" />
                                     ) : (
-                                        <Circle size={20} className={`text-gray-600 ${hasActivity ? 'group-hover:text-primary' : ''}`} />
+                                        <Circle size={24} className={`text-gray-600 ${hasActivity ? 'text-gray-400 group-hover:text-primary' : ''}`} />
                                     )}
                                 </button>
                             </div>

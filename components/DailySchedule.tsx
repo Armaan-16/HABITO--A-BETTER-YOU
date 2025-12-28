@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Sparkles, ChevronLeft, ChevronRight, Circle, CheckCircle2, Calendar, Activity, List, TrendingUp, Plus } from './Icons';
+import { Sparkles, ChevronLeft, ChevronRight, Circle, CheckCircle2, Calendar, Activity, List, TrendingUp, Plus, Minus } from './Icons';
 import { ScheduleData, ScheduleItem } from '../types';
 import { generateAiSchedule } from '../services/geminiService';
 import { getLocalDateKey } from '../utils/storage';
@@ -202,10 +202,12 @@ const DailySchedule: React.FC<DailyScheduleProps> = ({ scheduleData, setSchedule
   const handleAiGenerate = async () => {
     if (!prompt) return;
     setLoading(true);
+    
+    // Call the service
     const generatedItems = await generateAiSchedule(prompt, dateKey);
     
     if (!generatedItems || generatedItems.length === 0) {
-        alert("Failed to generate schedule. Please check your internet connection or API Key configuration.");
+        alert("Failed to generate schedule.\n\nPossible causes:\n1. API Key is missing (Check Netlify Settings).\n2. API Quota exceeded.\n3. Network issue.");
         setLoading(false);
         return;
     }
@@ -439,7 +441,7 @@ const DailySchedule: React.FC<DailyScheduleProps> = ({ scheduleData, setSchedule
                             <div className="bg-surfaceHighlight rounded-xl p-3 animate-in fade-in slide-in-from-top-2">
                                 <input 
                                     className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-primary focus:outline-none mb-2"
-                                    placeholder="e.g. Focus on coding and workout..."
+                                    placeholder="e.g. Sleep at 11pm, wake at 7am, focus on coding..."
                                     value={prompt}
                                     onChange={e => setPrompt(e.target.value)}
                                     autoFocus
@@ -504,15 +506,24 @@ const DailySchedule: React.FC<DailyScheduleProps> = ({ scheduleData, setSchedule
                                                 value={item?.activity || ''}
                                                 onChange={(e) => updateItem(hour, { activity: e.target.value })}
                                             />
-                                            {/* Plus Icon for repetition - appears when activity exists and not past */}
+                                            {/* Action Buttons: Plus (Copy) and Minus (Clear) */}
                                             {hasActivity && !isPast && (
-                                                <button 
-                                                    onClick={() => copyToNextHour(hour, item!.activity)}
-                                                    className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 p-1 text-gray-500 hover:text-primary transition-all hover:bg-white/5 rounded-md"
-                                                    title="Copy to next hour"
-                                                >
-                                                    <Plus size={16} />
-                                                </button>
+                                                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex opacity-0 group-hover/input:opacity-100 transition-opacity bg-surfaceHighlight/80 rounded-lg backdrop-blur-sm border border-white/5 z-10">
+                                                    <button 
+                                                        onClick={() => updateItem(hour, { activity: '' })}
+                                                        className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-white/5 rounded-l-lg transition-colors border-r border-white/10"
+                                                        title="Clear (Undo)"
+                                                    >
+                                                        <Minus size={14} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => copyToNextHour(hour, item!.activity)}
+                                                        className="p-1.5 text-gray-400 hover:text-primary hover:bg-white/5 rounded-r-lg transition-colors"
+                                                        title="Copy to next hour"
+                                                    >
+                                                        <Plus size={14} />
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
                                     )}

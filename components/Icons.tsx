@@ -1,4 +1,3 @@
-
 import { 
   Home, 
   Activity, 
@@ -7,6 +6,7 @@ import {
   CheckCircle2, 
   Circle, 
   Plus, 
+  Minus, 
   Zap, 
   TrendingUp, 
   MoreHorizontal,
@@ -17,8 +17,8 @@ import {
   Dumbbell,
   BrainCircuit,
   Sparkles,
-  ChevronRight,
-  ChevronLeft,
+  ChevronRight, 
+  ChevronLeft, 
   Clock,
   Target, 
   Rocket, 
@@ -40,7 +40,15 @@ import {
   Palette,
   RotateCcw,
   ListTodo,
-  Trophy
+  Trophy,
+  MessageSquare,
+  Music, 
+  Coffee, 
+  Briefcase, 
+  Laptop, 
+  Gamepad2, 
+  Smile, 
+  Utensils
 } from 'lucide-react';
 
 export { 
@@ -51,6 +59,7 @@ export {
   CheckCircle2, 
   Circle, 
   Plus, 
+  Minus, 
   Zap, 
   TrendingUp, 
   MoreHorizontal,
@@ -84,5 +93,13 @@ export {
   Palette,
   RotateCcw,
   ListTodo,
-  Trophy
+  Trophy,
+  MessageSquare,
+  Music, 
+  Coffee, 
+  Briefcase, 
+  Laptop, 
+  Gamepad2, 
+  Smile, 
+  Utensils
 };

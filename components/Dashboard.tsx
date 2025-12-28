@@ -6,7 +6,7 @@ import ImportantEvents from './ImportantEvents';
 import VisionBoard from './VisionBoard';
 import QuickNotes from './QuickNotes';
 import DailySummary from './DailySummary';
-import { Zap, Settings, LogOut, BookOpen } from './Icons'; 
+import { Zap, Settings, LogOut, BookOpen, MessageSquare } from './Icons'; 
 import { Habit, ScheduleData, LifeEvent, VisionItem, Note, User } from '../types';
 import { 
     loadHabits, saveHabits, 
@@ -30,10 +30,11 @@ interface DashboardProps {
     user: User;
     onOpenStory: () => void;
     onOpenSettings: () => void;
+    onOpenFeedback: () => void; // Added new prop
     onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings, onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings, onOpenFeedback, onLogout }) => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [scheduleData, setScheduleData] = useState<ScheduleData>({});
   const [events, setEvents] = useState<LifeEvent[]>([]);
@@ -95,6 +96,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings
                             >
                                 <Settings size={16} className="text-blue-400" />
                                 Settings
+                            </button>
+                            <button 
+                                onClick={() => { onOpenFeedback(); setIsMenuOpen(false); }}
+                                className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-surfaceHighlight rounded-lg transition-colors text-left w-full"
+                            >
+                                <MessageSquare size={16} className="text-emerald-400" />
+                                Feedback
                             </button>
                             <div className="h-px bg-white/5 my-1" />
                             <button 

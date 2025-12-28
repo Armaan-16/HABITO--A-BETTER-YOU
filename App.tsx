@@ -3,6 +3,7 @@ import Dashboard from './components/Dashboard';
 import Auth from './components/Auth';
 import SettingsModal from './components/SettingsModal';
 import StoryModal from './components/StoryModal';
+import FeedbackModal from './components/FeedbackModal';
 import { getCurrentUser, logoutUser } from './services/authService';
 import { loadTheme } from './utils/theme';
 import { User } from './types';
@@ -12,6 +13,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   useEffect(() => {
     // Check for existing session
@@ -42,6 +44,7 @@ const App: React.FC = () => {
           user={user} 
           onOpenStory={() => setIsStoryOpen(true)} 
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenFeedback={() => setIsFeedbackOpen(true)}
           onLogout={handleLogout}
         />
       </main>
@@ -54,6 +57,11 @@ const App: React.FC = () => {
       <StoryModal
         isOpen={isStoryOpen}
         onClose={() => setIsStoryOpen(false)}
+      />
+      
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
       />
 
       {/* Mobile Background Gradient Overlay */}

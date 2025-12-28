@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Habit } from '../types';
 import { Plus, Trash2, TrendingUp, CheckCircle2, ChevronDown, ChevronUp, Flame, Edit2 } from './Icons';
@@ -15,7 +14,8 @@ const AVAILABLE_ICONS = [
   'Circle', 'Activity', 'Zap', 'Droplets', 'BookOpen', 
   'Dumbbell', 'BrainCircuit', 'Sparkles', 'Moon', 'Sun', 
   'Target', 'Rocket', 'User', 'Phone', 'Trophy', 'Flame',
-  'ListTodo', 'Calendar', 'Clock'
+  'ListTodo', 'Calendar', 'Clock', 'Music', 'Coffee', 
+  'Briefcase', 'Laptop', 'Gamepad2', 'Smile', 'Utensils'
 ];
 
 const HabitMatrix: React.FC<HabitMatrixProps> = ({ habits, setHabits }) => {

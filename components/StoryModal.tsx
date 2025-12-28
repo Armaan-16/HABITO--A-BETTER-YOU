@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Heart, Upload, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Heart, Image as ImageIcon } from 'lucide-react';
 
 interface StoryModalProps {
   isOpen: boolean;
@@ -10,14 +10,14 @@ const StoryModal: React.FC<StoryModalProps> = ({ isOpen, onClose }) => {
   const [qrSrc, setQrSrc] = useState<string>('/support_qr.png');
   const [imgError, setImgError] = useState<boolean>(false);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      setQrSrc(objectUrl);
-      setImgError(false);
+  // Load saved QR from local storage on mount (read-only support for previously saved QRs)
+  useEffect(() => {
+    const savedQr = localStorage.getItem('habito_support_qr');
+    if (savedQr) {
+        setQrSrc(savedQr);
+        setImgError(false);
     }
-  };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -73,30 +73,18 @@ const StoryModal: React.FC<StoryModalProps> = ({ isOpen, onClose }) => {
                 If Habito helps you improve your life, consider supporting our journey.
             </p>
 
-            <div className="relative group">
+            <div className="relative group w-48 h-48 mx-auto flex items-center justify-center">
                 {!imgError ? (
                     <img 
                         src={qrSrc} 
                         onError={() => setImgError(true)}
                         alt="Scan to Support" 
-                        className="w-48 h-48 object-contain rounded-xl border-2 border-gray-100 shadow-lg"
+                        className="w-full h-full object-contain rounded-xl border-2 border-gray-100 shadow-lg"
                     />
                 ) : (
-                    <div className="w-48 h-48 flex flex-col items-center justify-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 p-4 text-center">
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 p-4 text-center">
                         <ImageIcon className="text-gray-300 mb-2" size={32} />
-                        <p className="text-xs text-gray-500 mb-3 font-medium">QR Image Missing</p>
-                        
-                        <label className="cursor-pointer bg-primary hover:bg-primaryDark text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shadow-sm">
-                            <Upload size={12} />
-                            Upload QR
-                            <input 
-                                type="file" 
-                                accept="image/*" 
-                                className="hidden" 
-                                onChange={handleFileUpload}
-                            />
-                        </label>
-                        <p className="text-[9px] text-gray-400 mt-2">or save 'support_qr.png' in root</p>
+                        <p className="text-xs text-gray-400 font-medium">QR Unavailable</p>
                     </div>
                 )}
             </div>

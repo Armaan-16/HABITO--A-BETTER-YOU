@@ -35,6 +35,14 @@ export interface Note {
   createdAt: string;
 }
 
+export interface JournalEntry {
+  id: string;
+  date: string; // 'YYYY-MM-DD'
+  content: string;
+  mood?: 'happy' | 'neutral' | 'sad' | 'productive' | 'tired';
+  lastUpdated: string;
+}
+
 export interface Quote {
   text: string;
   author: string;

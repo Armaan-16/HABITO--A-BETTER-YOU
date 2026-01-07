@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { VisionItem, VisionCategory } from '../types';
-import { Target, Rocket, Crown, Calendar, Plus, Trash2, Edit2, Check, X, ListTodo, Sun } from 'lucide-react';
+import { Target, Rocket, Crown, Calendar, Plus, Trash2, Edit2, Check, X, ListTodo, Sun, GripVertical } from './Icons';
 
 interface VisionBoardProps {
   visions: VisionItem[];
@@ -25,17 +25,62 @@ const VisionBoard: React.FC<VisionBoardProps> = ({ visions, setVisions }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
 
+  // Drag & Drop Refs
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+
   // Filter logic: Standard categories vs Weekly with Day breakdown
   const currentVisions = visions.filter(v => {
       if (v.category !== activeTab) return false;
       if (activeTab === 'WEEKLY') {
-          // If it's weekly, match the day. If item has no day (legacy), show on Mon or All? 
-          // Let's default legacy items to 'Mon' or current activeDay if we want to migrate them. 
-          // For now, strict match or default to first day if undefined.
           return (v.day === activeDay) || (!v.day && activeDay === 'Mon');
       }
       return true;
   });
+
+  const handleDragStart = (e: React.DragEvent, position: number) => {
+    dragItem.current = position;
+    // We allow standard move effect
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnter = (e: React.DragEvent, position: number) => {
+    e.preventDefault();
+    
+    // If we are over a different item than the one we are dragging
+    if (dragItem.current !== null && dragItem.current !== position) {
+        
+        // 1. Create a copy of the current visible list
+        const newOrderedVisible = [...currentVisions];
+        const itemToMove = newOrderedVisible[dragItem.current];
+        
+        // 2. Perform the swap in the visible list
+        newOrderedVisible.splice(dragItem.current, 1);
+        newOrderedVisible.splice(position, 0, itemToMove);
+        
+        // 3. Update the ref immediately to avoid flickering
+        dragItem.current = position;
+
+        // 4. Update the global visions state
+        // We filter out items that match the current view criteria from the global list,
+        // then append our reordered list.
+        const others = visions.filter(v => {
+             if (v.category !== activeTab) return true;
+             if (activeTab === 'WEEKLY') {
+                  const isVisible = (v.day === activeDay) || (!v.day && activeDay === 'Mon');
+                  return !isVisible;
+             }
+             return false;
+        });
+
+        setVisions([...others, ...newOrderedVisible]);
+    }
+  };
+
+  const handleDragEnd = () => {
+      dragItem.current = null;
+      dragOverItem.current = null;
+  };
 
   const handleAdd = () => {
     if (!newVision.trim()) return;
@@ -152,47 +197,62 @@ const VisionBoard: React.FC<VisionBoardProps> = ({ visions, setVisions }) => {
           </div>
         ) : (
           <div className="space-y-3">
-             {currentVisions.map(vision => {
+             {currentVisions.map((vision, index) => {
                 const isEditing = editingId === vision.id;
                 return (
-                    <div key={vision.id} className={`group flex items-center gap-3 p-3 rounded-xl border transition-all ${isEditing ? 'bg-surfaceHighlight/40 border-primary/30' : 'bg-surfaceHighlight/20 border-white/5 hover:border-white/10'}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${CATEGORIES.find(c => c.id === vision.category)?.color.replace('text-', 'bg-') || 'bg-white'}`} />
-                    
-                    <div className="flex-1">
-                        {isEditing ? (
-                        <input 
-                            className="w-full bg-black/40 text-white text-sm px-2 py-1 rounded focus:outline-none focus:ring-1 focus:ring-primary"
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e, saveEdit)}
-                            autoFocus
-                        />
-                        ) : (
-                        <p className="text-sm text-gray-200">{vision.text}</p>
+                    <div 
+                        key={vision.id} 
+                        draggable={!isEditing}
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragEnter={(e) => handleDragEnter(e, index)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => e.preventDefault()}
+                        className={`group flex items-center gap-3 p-3 rounded-xl border transition-all ${isEditing ? 'bg-surfaceHighlight/40 border-primary/30 cursor-default' : 'bg-surfaceHighlight/20 border-white/5 hover:border-white/10 cursor-grab active:cursor-grabbing'}`}
+                    >
+                        {/* Drag Handle (Visible on Group Hover) */}
+                        {!isEditing && (
+                            <div className="text-gray-600 hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" title="Drag to reorder">
+                                <GripVertical size={14} />
+                            </div>
                         )}
-                    </div>
 
-                    <div className={`flex gap-2 transition-opacity ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                        {isEditing ? (
-                        <>
-                            <button onClick={saveEdit} className="text-success hover:text-success/80 bg-success/10 p-1 rounded">
-                                <Check size={14} />
-                            </button>
-                            <button onClick={cancelEdit} className="text-gray-400 hover:text-gray-200 bg-white/5 p-1 rounded">
-                                <X size={14} />
-                            </button>
-                        </>
-                        ) : (
-                        <>
-                            <button onClick={() => startEdit(vision)} className="text-gray-500 hover:text-white p-1 rounded hover:bg-white/5">
-                                <Edit2 size={14} />
-                            </button>
-                            <button onClick={() => handleDelete(vision.id)} className="text-gray-500 hover:text-red-500 p-1 rounded hover:bg-red-500/10">
-                                <Trash2 size={14} />
-                            </button>
-                        </>
-                        )}
-                    </div>
+                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${CATEGORIES.find(c => c.id === vision.category)?.color.replace('text-', 'bg-') || 'bg-white'}`} />
+                        
+                        <div className="flex-1 min-w-0">
+                            {isEditing ? (
+                            <input 
+                                className="w-full bg-black/40 text-white text-sm px-2 py-1 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(e, saveEdit)}
+                                autoFocus
+                            />
+                            ) : (
+                            <p className="text-sm text-gray-200 truncate select-none">{vision.text}</p>
+                            )}
+                        </div>
+
+                        <div className={`flex gap-2 transition-opacity ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                            {isEditing ? (
+                            <>
+                                <button onClick={saveEdit} className="text-success hover:text-success/80 bg-success/10 p-1 rounded">
+                                    <Check size={14} />
+                                </button>
+                                <button onClick={cancelEdit} className="text-gray-400 hover:text-gray-200 bg-white/5 p-1 rounded">
+                                    <X size={14} />
+                                </button>
+                            </>
+                            ) : (
+                            <>
+                                <button onClick={() => startEdit(vision)} className="text-gray-500 hover:text-white p-1 rounded hover:bg-white/5">
+                                    <Edit2 size={14} />
+                                </button>
+                                <button onClick={() => handleDelete(vision.id)} className="text-gray-500 hover:text-red-500 p-1 rounded hover:bg-red-500/10">
+                                    <Trash2 size={14} />
+                                </button>
+                            </>
+                            )}
+                        </div>
                     </div>
                 );
              })}

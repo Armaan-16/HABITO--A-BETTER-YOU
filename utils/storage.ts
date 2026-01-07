@@ -1,5 +1,5 @@
 
-import { Habit, ScheduleData, LifeEvent, VisionItem, Note } from '../types';
+import { Habit, ScheduleData, LifeEvent, VisionItem, Note, JournalEntry } from '../types';
 import { getCurrentUser } from '../services/authService';
 
 // Base keys
@@ -9,6 +9,8 @@ const BASE_KEYS = {
   EVENTS: 'habito_events',
   VISIONS: 'habito_visions',
   NOTES: 'habito_notes',
+  JOURNAL: 'habito_journal',
+  WIDGET_ORDER: 'habito_widget_order',
 };
 
 // Helper to get user-specific key
@@ -61,6 +63,24 @@ export const loadNotes = (): Note[] => {
 
 export const saveNotes = (notes: Note[]) => {
   localStorage.setItem(getUserKey(BASE_KEYS.NOTES), JSON.stringify(notes));
+};
+
+export const loadJournal = (): JournalEntry[] => {
+  const data = localStorage.getItem(getUserKey(BASE_KEYS.JOURNAL));
+  return data ? JSON.parse(data) : [];
+};
+
+export const saveJournal = (journal: JournalEntry[]) => {
+  localStorage.setItem(getUserKey(BASE_KEYS.JOURNAL), JSON.stringify(journal));
+};
+
+export const loadWidgetOrder = (): string[] => {
+  const data = localStorage.getItem(getUserKey(BASE_KEYS.WIDGET_ORDER));
+  return data ? JSON.parse(data) : ['summary', 'momentum', 'matrix', 'vision', 'events', 'notes'];
+};
+
+export const saveWidgetOrder = (order: string[]) => {
+  localStorage.setItem(getUserKey(BASE_KEYS.WIDGET_ORDER), JSON.stringify(order));
 };
 
 // Helper to get consistent 'YYYY-MM-DD' key in Local Time

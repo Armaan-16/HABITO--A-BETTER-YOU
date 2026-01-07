@@ -7,13 +7,14 @@ import VisionBoard from './VisionBoard';
 import QuickNotes from './QuickNotes';
 import DailySummary from './DailySummary';
 import { Zap, Settings, LogOut, BookOpen, MessageSquare, ChevronRight, User as UserIcon } from './Icons'; 
-import { Habit, ScheduleData, LifeEvent, VisionItem, Note, User } from '../types';
+import { Habit, ScheduleData, LifeEvent, VisionItem, Note, User, JournalEntry } from '../types';
 import { 
     loadHabits, saveHabits, 
     loadSchedule, saveSchedule, 
     loadEvents, saveEvents,
     loadVisions, saveVisions,
-    loadNotes, saveNotes
+    loadNotes, saveNotes,
+    loadJournal, saveJournal
 } from '../utils/storage';
 
 const QUOTES = [
@@ -31,7 +32,7 @@ interface DashboardProps {
     onOpenStory: () => void;
     onOpenSettings: () => void;
     onOpenFeedback: () => void;
-    onOpenProfile: () => void; // New prop for profile
+    onOpenProfile: () => void;
     onLogout: () => void;
 }
 
@@ -41,9 +42,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings
   const [events, setEvents] = useState<LifeEvent[]>([]);
   const [visions, setVisions] = useState<VisionItem[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [journal, setJournal] = useState<JournalEntry[]>([]);
   const [quote, setQuote] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  
   // Load Initial Data (Runs whenever User ID changes)
   useEffect(() => {
     setHabits(loadHabits());
@@ -51,6 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings
     setEvents(loadEvents());
     setVisions(loadVisions());
     setNotes(loadNotes());
+    setJournal(loadJournal());
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
   }, [user.id]);
 
@@ -60,6 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings
   useEffect(() => { saveEvents(events); }, [events]);
   useEffect(() => { saveVisions(visions); }, [visions]);
   useEffect(() => { saveNotes(notes); }, [notes]);
+  useEffect(() => { saveJournal(journal); }, [journal]);
 
   return (
     <div className="p-4 md:p-8 max-w-[1800px] mx-auto space-y-6">
@@ -143,28 +147,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
         {/* Left Column (Main Content) */}
         <div className="xl:col-span-2 flex flex-col gap-6">
-            {/* 1. Daily Summary */}
             <DailySummary scheduleData={scheduleData} habits={habits} />
-
-            {/* 2. Yearly Consistency (Renamed to Momentum) */}
             <YearlyConsistency scheduleData={scheduleData} habits={habits} />
-
-            {/* 3. Habit Matrix */}
             <HabitMatrix habits={habits} setHabits={setHabits} />
-
-            {/* 4. Vision Board */}
             <VisionBoard visions={visions} setVisions={setVisions} />
-            
-            {/* 5. Important Events */}
             <ImportantEvents events={events} setEvents={setEvents} />
-
-            {/* 6. Quick Notes */}
-            <QuickNotes notes={notes} setNotes={setNotes} />
+            <QuickNotes notes={notes} setNotes={setNotes} journal={journal} setJournal={setJournal} />
         </div>
 
-        {/* Right Column (Side Panel) */}
+        {/* Right Column (Side Panel - Fixed) */}
         <div className="xl:col-span-1 flex flex-col gap-6 h-full">
-            {/* 7. Daily Schedule */}
             <div className="flex-grow sticky top-8" style={{ height: 'calc(100vh - 100px)' }}>
                 <DailySchedule scheduleData={scheduleData} setScheduleData={setScheduleData} />
             </div>

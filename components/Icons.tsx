@@ -48,7 +48,11 @@ import {
   Laptop, 
   Gamepad2, 
   Smile, 
-  Utensils
+  Utensils,
+  Save,
+  Type,
+  LayoutGrid,
+  GripVertical
 } from 'lucide-react';
 
 export { 
@@ -101,5 +105,9 @@ export {
   Laptop, 
   Gamepad2, 
   Smile, 
-  Utensils
+  Utensils,
+  Save,
+  Type,
+  LayoutGrid,
+  GripVertical
 };

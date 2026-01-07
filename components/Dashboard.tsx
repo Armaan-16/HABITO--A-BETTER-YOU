@@ -6,7 +6,7 @@ import ImportantEvents from './ImportantEvents';
 import VisionBoard from './VisionBoard';
 import QuickNotes from './QuickNotes';
 import DailySummary from './DailySummary';
-import { Zap, Settings, LogOut, BookOpen, MessageSquare } from './Icons'; 
+import { Zap, Settings, LogOut, BookOpen, MessageSquare, ChevronRight, User as UserIcon } from './Icons'; 
 import { Habit, ScheduleData, LifeEvent, VisionItem, Note, User } from '../types';
 import { 
     loadHabits, saveHabits, 
@@ -30,11 +30,12 @@ interface DashboardProps {
     user: User;
     onOpenStory: () => void;
     onOpenSettings: () => void;
-    onOpenFeedback: () => void; // Added new prop
+    onOpenFeedback: () => void;
+    onOpenProfile: () => void; // New prop for profile
     onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings, onOpenFeedback, onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings, onOpenFeedback, onOpenProfile, onLogout }) => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [scheduleData, setScheduleData] = useState<ScheduleData>({});
   const [events, setEvents] = useState<LifeEvent[]>([]);
@@ -63,11 +64,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings
   return (
     <div className="p-4 md:p-8 max-w-[1800px] mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8 relative z-50">
-          <div className="flex items-center gap-4">
+      <div className="mb-10 relative z-50">
+          <div className="flex items-start gap-5">
               
               {/* Logo Menu Button */}
-              <div className="relative">
+              <div className="relative pt-1">
                   <button 
                       onClick={() => setIsMenuOpen(!isMenuOpen)}
                       className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0 animate-in zoom-in-50 hover:scale-105 transition-transform"
@@ -117,11 +118,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings
                   )}
               </div>
 
-              <div>
-                  <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight">Welcome Back, {user.name}</h1>
-                  <div className="mt-2 inline-block px-4 py-2 rounded-r-xl border-l-4 border-primary bg-surfaceHighlight/30 backdrop-blur-sm">
-                    <p className="text-gray-300 italic font-medium text-sm md:text-base">"{quote}"</p>
-                  </div>
+              {/* Clickable Name & Quote Section */}
+              <div className="flex flex-col gap-1 pt-0.5">
+                  <button 
+                    onClick={onOpenProfile}
+                    className="group flex items-center gap-3 text-left focus:outline-none"
+                    title="View Profile & Password"
+                  >
+                      <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight leading-none group-hover:text-primary transition-colors">
+                        {user.name}
+                      </h1>
+                      <div className="p-1 rounded-full text-gray-500 opacity-0 group-hover:opacity-100 transition-all transform -translate-x-2 group-hover:translate-x-0">
+                          <ChevronRight size={24} />
+                      </div>
+                  </button>
+                  
+                  <p className="text-gray-400 font-medium text-sm md:text-base italic pl-1 opacity-80 mt-1 border-l-2 border-primary/40 pl-3">
+                    "{quote}"
+                  </p>
               </div>
           </div>
       </div>
@@ -133,7 +147,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onOpenStory, onOpenSettings
             <DailySummary scheduleData={scheduleData} habits={habits} />
 
             {/* 2. Yearly Consistency (Renamed to Momentum) */}
-            <YearlyConsistency scheduleData={scheduleData} />
+            <YearlyConsistency scheduleData={scheduleData} habits={habits} />
 
             {/* 3. Habit Matrix */}
             <HabitMatrix habits={habits} setHabits={setHabits} />

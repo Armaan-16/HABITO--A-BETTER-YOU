@@ -4,6 +4,7 @@ import Auth from './components/Auth';
 import SettingsModal from './components/SettingsModal';
 import StoryModal from './components/StoryModal';
 import FeedbackModal from './components/FeedbackModal';
+import ProfileModal from './components/ProfileModal';
 import { getCurrentUser, logoutUser } from './services/authService';
 import { loadTheme } from './utils/theme';
 import { User } from './types';
@@ -14,6 +15,7 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStoryOpen, setIsStoryOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     // Check for existing session
@@ -31,6 +33,10 @@ const App: React.FC = () => {
     setUser(null);
   };
 
+  const handleUserUpdate = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
   if (loading) return null; // Or a loading spinner
 
   if (!user) {
@@ -45,6 +51,7 @@ const App: React.FC = () => {
           onOpenStory={() => setIsStoryOpen(true)} 
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenFeedback={() => setIsFeedbackOpen(true)}
+          onOpenProfile={() => setIsProfileOpen(true)}
           onLogout={handleLogout}
         />
       </main>
@@ -62,6 +69,13 @@ const App: React.FC = () => {
       <FeedbackModal
         isOpen={isFeedbackOpen}
         onClose={() => setIsFeedbackOpen(false)}
+      />
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={user}
+        onUpdate={handleUserUpdate}
       />
 
       {/* Mobile Background Gradient Overlay */}

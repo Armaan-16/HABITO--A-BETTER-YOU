@@ -7,7 +7,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, (process as any).cwd(), '');
   
   // Prioritize env var from loadEnv, then process.env (for Netlify/CI)
-  const apiKey = env.API_KEY || process.env.API_KEY;
+  // Fallback to empty string to ensure JSON.stringify doesn't fail on undefined
+  const apiKey = env.API_KEY || process.env.API_KEY || "";
 
   return {
     plugins: [react()],

@@ -200,25 +200,23 @@ const DailySchedule: React.FC<DailyScheduleProps> = ({ scheduleData, setSchedule
   };
 
   const handleAiGenerate = async () => {
-    if (!prompt) return;
     setLoading(true);
     
-    // Call the service
-    const generatedItems = await generateAiSchedule(prompt, dateKey);
-    
-    if (!generatedItems || generatedItems.length === 0) {
-        alert("Failed to generate schedule.\n\nPossible causes:\n1. API Key is missing (Check Netlify Settings).\n2. API Quota exceeded.\n3. Network issue.");
+    try {
+        // Pass prompt even if empty (service handles it)
+        const generatedItems = await generateAiSchedule(prompt, dateKey);
+        
+        setScheduleData(prev => ({
+            ...prev,
+            [dateKey]: generatedItems
+        }));
+        setShowPrompt(false);
+    } catch (error: any) {
+        // Show specific error from service
+        alert(`Creation Failed: ${error.message}`);
+    } finally {
         setLoading(false);
-        return;
     }
-
-    setScheduleData(prev => ({
-        ...prev,
-        [dateKey]: generatedItems
-    }));
-    
-    setLoading(false);
-    setShowPrompt(false);
   };
 
   return (

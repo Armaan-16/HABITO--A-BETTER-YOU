@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Zap, ChevronRight, User, Phone, Lock } from 'lucide-react';
+import { Zap, ChevronRight, User, Phone, Lock, Mail } from 'lucide-react';
 import { loginUser, registerUser } from '../services/authService';
 import { User as UserType } from '../types';
 
@@ -15,6 +14,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   // Form State
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -22,8 +22,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     setError('');
 
     if (!phone || !password) {
-      setError('Please fill in all required fields.');
+      setError('Please fill in required fields (Phone & Password).');
       return;
+    }
+
+    // Validate Indian Phone Number
+    // Must be 10 digits and start with 6, 7, 8, or 9
+    const indianPhoneRegex = /^[6-9]\d{9}$/;
+    if (!indianPhoneRegex.test(phone)) {
+        setError('Please enter a valid 10-digit Indian mobile number (starts with 6-9).');
+        return;
     }
 
     if (isLogin) {
@@ -38,7 +46,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
         setError('Name is required for sign up.');
         return;
       }
-      const result = registerUser(name, phone, password);
+      const result = registerUser(name, phone, password, email);
       if (result.success && result.user) {
         onLogin(result.user);
       } else {
@@ -69,31 +77,54 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-                <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-500 ml-1">Full Name</label>
-                    <div className="relative">
-                        <User className="absolute left-3 top-3 text-gray-500" size={18} />
-                        <input 
-                            type="text"
-                            placeholder="John Doe"
-                            className="w-full bg-surfaceHighlight/50 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-primary transition-colors"
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                        />
+                <>
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 ml-1">Full Name</label>
+                        <div className="relative">
+                            <User className="absolute left-3 top-3 text-gray-500" size={18} />
+                            <input 
+                                type="text"
+                                placeholder="John Doe"
+                                className="w-full bg-surfaceHighlight/50 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-primary transition-colors"
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                            />
+                        </div>
                     </div>
-                </div>
+                    
+                    <div className="space-y-1">
+                        <label className="text-xs font-medium text-gray-500 ml-1">Email (Optional)</label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-3 text-gray-500" size={18} />
+                            <input 
+                                type="email"
+                                placeholder="john@example.com"
+                                className="w-full bg-surfaceHighlight/50 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-primary transition-colors"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </>
             )}
 
             <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-500 ml-1">Phone Number</label>
                 <div className="relative">
-                    <Phone className="absolute left-3 top-3 text-gray-500" size={18} />
+                    {/* Visual Prefix +91 */}
+                    <div className="absolute left-3 top-3.5 text-gray-400 text-sm font-medium border-r border-white/10 pr-2 h-5 flex items-center pointer-events-none select-none">
+                        +91
+                    </div>
                     <input 
                         type="tel"
-                        placeholder="+1 234 567 890"
-                        className="w-full bg-surfaceHighlight/50 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-primary transition-colors"
+                        placeholder="98765 43210"
+                        className="w-full bg-surfaceHighlight/50 border border-white/5 rounded-xl py-3 pl-14 pr-4 text-white focus:outline-none focus:border-primary transition-colors tracking-widest font-medium placeholder-gray-600"
                         value={phone}
-                        onChange={e => setPhone(e.target.value)}
+                        onChange={e => {
+                            // Enforce numbers only and max 10 digits
+                            const val = e.target.value.replace(/\D/g, '');
+                            if (val.length <= 10) setPhone(val);
+                        }}
                     />
                 </div>
             </div>

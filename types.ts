@@ -58,6 +58,7 @@ export interface User {
   id: string; // This will be the phone number
   name: string;
   phone: string;
+  email?: string;
   password: string; // In a real app, this should be hashed. Here stored as plain text for demo.
   createdAt: string;
 }

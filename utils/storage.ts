@@ -70,3 +70,19 @@ export const getLocalDateKey = (date: Date = new Date()): string => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+// Migrates all user data from one ID (phone) to another
+export const migrateUserData = (oldId: string, newId: string) => {
+    const keysToMigrate = Object.values(BASE_KEYS);
+    
+    keysToMigrate.forEach(baseKey => {
+        const oldKey = `user_${oldId}_${baseKey}`;
+        const newKey = `user_${newId}_${baseKey}`;
+        
+        const data = localStorage.getItem(oldKey);
+        if (data) {
+            localStorage.setItem(newKey, data);
+            localStorage.removeItem(oldKey);
+        }
+    });
+};

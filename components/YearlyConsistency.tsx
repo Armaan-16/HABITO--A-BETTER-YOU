@@ -1,27 +1,39 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from './Icons';
-import { ScheduleData } from '../types';
+import { ScheduleData, Habit } from '../types';
 import { getLocalDateKey } from '../utils/storage';
 
 interface YearlyConsistencyProps {
   scheduleData: ScheduleData;
+  habits: Habit[];
 }
 
-const YearlyConsistency: React.FC<YearlyConsistencyProps> = ({ scheduleData }) => {
+const YearlyConsistency: React.FC<YearlyConsistencyProps> = ({ scheduleData, habits }) => {
   const [year, setYear] = useState(new Date().getFullYear());
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Calculate completion rate based on Daily Schedule
-  const getIntensity = (dateStr: string) => {
+  // Calculate completion rate based on Daily Schedule AND Habits
+  const getIntensity = (date: Date) => {
+    const dateStr = getLocalDateKey(date);
+    
+    // 1. Schedule Calculations
     const dayItems = scheduleData[dateStr] || [];
-    
-    // Filter only items that have an actual activity defined
-    const activeItems = dayItems.filter(i => i.activity && i.activity.trim() !== '');
-    
-    if (activeItems.length === 0) return 0;
+    const activeScheduleItems = dayItems.filter(i => i.activity && i.activity.trim() !== '');
+    const scheduleCount = activeScheduleItems.length;
+    const scheduleCompleted = activeScheduleItems.filter(i => i.completed).length;
 
-    const completed = activeItems.filter(i => i.completed).length;
-    return completed / activeItems.length;
+    // 2. Habit Calculations
+    const dayOfWeek = date.getDay();
+    const activeHabits = habits.filter(h => h.frequency.includes(dayOfWeek));
+    const habitCount = activeHabits.length;
+    const habitCompleted = activeHabits.filter(h => h.history[dateStr]).length;
+
+    // 3. Combined Intensity
+    const totalCount = scheduleCount + habitCount;
+    const totalCompleted = scheduleCompleted + habitCompleted;
+
+    if (totalCount === 0) return 0;
+    return totalCompleted / totalCount;
   };
 
   const { weeks, monthLabels } = useMemo(() => {
@@ -164,8 +176,7 @@ const YearlyConsistency: React.FC<YearlyConsistencyProps> = ({ scheduleData }) =
                             // If date is null (placeholder), render transparent box
                             if (!date) return <div key={dIndex} style={{ width: CELL_SIZE, height: CELL_SIZE }} />;
                             
-                            const dateStr = getLocalDateKey(date);
-                            const intensity = getIntensity(dateStr);
+                            const intensity = getIntensity(date);
                             
                             let bgClass = 'bg-surfaceHighlight/30';
                             if (intensity > 0) bgClass = 'bg-primary/30';

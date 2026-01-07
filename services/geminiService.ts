@@ -4,18 +4,16 @@ import { ScheduleItem } from '../types';
 const modelName = "gemini-3-flash-preview";
 
 export const generateAiSchedule = async (userFocus: string, date: string): Promise<ScheduleItem[]> => {
+  // Vite replaces process.env.API_KEY with the actual string value during build.
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey || apiKey === "undefined" || apiKey.length === 0) {
+      throw new Error("Gemini API Key is missing. Please set the API_KEY environment variable in your Netlify settings or local .env file.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
   try {
-    // Vite replaces process.env.API_KEY with the actual string value during build.
-    // We check for various "empty" states to be safe.
-    const apiKey = process.env.API_KEY;
-    
-    if (!apiKey || apiKey === "undefined" || apiKey.length === 0) {
-        console.error("Gemini API Key is missing. Ensure the API_KEY environment variable is set in your Netlify deployment settings.");
-        return [];
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
-
     const response = await ai.models.generateContent({
       model: modelName,
       contents: `
@@ -25,17 +23,16 @@ export const generateAiSchedule = async (userFocus: string, date: string): Promi
 
       Task: Generate a JSON schedule for the entire day (Hours 0 to 23).
       
-      CRITICAL SLEEP LOGIC:
-      1. Analyze the user's request for sleep/wake times (e.g., "sleep at 10", "wake up at 6").
-         - If they say "sleep at 10" (or 10pm), marks hours 22 and 23 as activity "Sleep" (category: "rest").
-         - If they say "wake up at 6" (or 6am), marks hours 0, 1, 2, 3, 4, 5 as activity "Sleep" (category: "rest").
-         - Ensure the ENTIRE block between sleep time and wake time is filled with "Sleep".
-      2. If no sleep time is mentioned, assume a standard cycle (e.g., Sleep 23:00-07:00).
-      3. For all WAKING hours, create specific, productive activities matching the user's focus.
+      CRITICAL INSTRUCTIONS:
+      1. Analyze the user's request. If the request is vague, nonsense (e.g., "fgdd", "asdf"), too short, or empty, IGNORE the text and generate a generic, balanced, high-productivity schedule for a healthy individual (e.g., Sleep 23-07, Work 09-17, Exercise, etc.).
+      2. SLEEP LOGIC:
+         - If user specifies sleep/wake times, fill those hours with "Sleep" (category: "rest").
+         - Otherwise, assume standard sleep (23:00 to 07:00).
+      3. Fill ALL 24 hours (0-23).
       
       Constraints:
       - Activity descriptions must be concise (max 5 words).
-      - Return a JSON object with a "schedule" property containing the array.
+      - Category must be exactly one of: 'work', 'health', 'rest', 'focus', 'other'.
       `,
       config: {
         responseMimeType: "application/json",
@@ -49,7 +46,7 @@ export const generateAiSchedule = async (userFocus: string, date: string): Promi
                 properties: {
                   hour: { type: Type.INTEGER, description: "Hour of the day 0-23" },
                   activity: { type: Type.STRING },
-                  category: { type: Type.STRING, description: "One of: work, health, rest, focus, other" }
+                  category: { type: Type.STRING, description: "work, health, rest, focus, other" }
                 },
                 required: ["hour", "activity", "category"]
               }
@@ -61,49 +58,56 @@ export const generateAiSchedule = async (userFocus: string, date: string): Promi
 
     let jsonStr = response.text;
     if (!jsonStr) {
-        console.warn("Gemini returned empty response text");
-        return [];
+        throw new Error("Gemini returned an empty response.");
     }
     
-    // Robust cleanup: Remove Markdown code blocks if the model includes them
+    // Cleanup potential markdown blocks if the model ignores MIME type (rare but possible)
     jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
     
     let rawData;
     try {
         rawData = JSON.parse(jsonStr);
     } catch (parseError) {
-        console.error("Failed to parse Gemini JSON response. Raw text:", jsonStr, parseError);
-        return [];
+        console.error("JSON Parse Error:", jsonStr);
+        throw new Error("Failed to parse AI response. Please try again.");
     }
     
-    // Handle wrapped response (preferred) or fallback to root array
     const scheduleArray = rawData.schedule || (Array.isArray(rawData) ? rawData : []);
     
-    if (!Array.isArray(scheduleArray)) {
-        console.warn("Gemini response format unexpected:", rawData);
-        return [];
+    if (!Array.isArray(scheduleArray) || scheduleArray.length === 0) {
+        throw new Error("AI returned an invalid schedule format.");
     }
 
+    // Map and sanitize the response
     return scheduleArray.map((item: any) => ({
       id: `ai-${item.hour}-${Date.now()}`,
       hour: item.hour,
-      activity: item.activity,
+      activity: item.activity || "Free Time",
       completed: false,
-      category: item.category
+      category: ['work', 'health', 'rest', 'focus', 'other'].includes(item.category?.toLowerCase()) 
+        ? item.category.toLowerCase() 
+        : 'other'
     }));
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Schedule Error:", error);
-    return [];
+    
+    // Provide clearer error messages for common issues
+    if (error.message.includes("403") || error.message.includes("API key")) {
+        throw new Error("Invalid API Key or Quota Exceeded. Please check your Netlify environment variables.");
+    }
+    if (error.message.includes("429")) {
+        throw new Error("API Quota Exceeded. Please try again later.");
+    }
+    
+    throw error;
   }
 };
 
 export const getAiInsight = async (completedCount: number, totalCount: number): Promise<string> => {
   try {
     const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === "undefined") {
-        return "Consistency is key. (API Key missing)";
-    }
+    if (!apiKey || apiKey === "undefined") return "Consistency is key.";
 
     const ai = new GoogleGenAI({ apiKey });
 
